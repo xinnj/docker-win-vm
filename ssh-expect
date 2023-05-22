@@ -1,0 +1,37 @@
+#! /usr/bin/expect
+
+if { $argc < 5 } {
+    send_user " ERROR : Invalid arguments.\n"
+    send_user " Usage : $argv0 host port user pw cmd\n"
+    exit 10
+}
+
+set host [ lindex $argv 0 ]
+set port [ lindex $argv 1 ]
+set user [ lindex $argv 2 ]
+set pw   [ lindex $argv 3 ]
+set cmd  [ lindex $argv 4 ]
+set timemout 15
+
+spawn ssh $user@$host -p $port $cmd
+set ssh_id $spawn_id
+
+expect {
+    -nocase "yes/no" {
+        exp_send "yes\r"
+        exp_continue
+    }
+    -nocase "password:" {
+        exp_send "${pw}\r"
+        expect  "try again" {
+                send_user "\nERROR: Password is incorrect!\n"
+                close $spawn_id
+                exit 12
+        }
+    }
+    default {
+        send_error "ERROR : timeout or eof.\n"
+        close $spawn_id
+        exit 11
+   }
+}

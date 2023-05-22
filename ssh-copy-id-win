@@ -1,0 +1,17 @@
+#! /bin/bash
+set -euao pipefail
+
+base=`dirname $0`
+if [ "$#" != "5" ]; then
+    echo "Usage: `basename $0` host port username password key"
+    exit 1
+fi
+
+host=$1
+port=$2
+username=$3
+password=$4
+pub_key=$(cat "$5")
+command="powershell -command \"Add-Content -Force -Path \$env:ProgramData\\ssh\\administrators_authorized_keys -Value '$pub_key';icacls.exe \`\"\$env:ProgramData\\ssh\\administrators_authorized_keys\`\" /inheritance:r /grant \`\"Administrators:F\`\" /grant \`\"SYSTEM:F\`\"\""
+
+"${base}/ssh-expect" $host $port $username $password "$command"

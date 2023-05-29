@@ -53,7 +53,7 @@ RUN touch Launch.sh \
     && tee -a Launch.sh <<< '-drive index=0,media=disk,if=virtio,file=${IMAGE_PATH},format=${IMAGE_FORMAT} \' \
     && tee -a Launch.sh <<< '${INSTALL_ISO_DEVICE} \' \
     && tee -a Launch.sh <<< '${DRIVER_ISO_DEVICE} \' \
-    && tee -a Launch.sh <<< '-netdev user,id=net0,hostfwd=tcp::${INTERNAL_SSH_PORT}-:22,hostfwd=tcp::${SCREEN_SHARE_PORT}-:5900,${ADDITIONAL_PORTS} \' \
+    && tee -a Launch.sh <<< '-netdev user,id=net0,dnssearch=default.svc.cluster.local,dnssearch=svc.cluster.local,hostfwd=tcp::${INTERNAL_SSH_PORT}-:22,hostfwd=tcp::${SCREEN_SHARE_PORT}-:5900,${ADDITIONAL_PORTS} \' \
     && tee -a Launch.sh <<< '-device ${NETWORKING},netdev=net0,id=net0,mac=${MAC_ADDRESS:-$macaddr} \' \
     && tee -a Launch.sh <<< '-boot menu=on \' \
     && tee -a Launch.sh <<< '-vga std \' \

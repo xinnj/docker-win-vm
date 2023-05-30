@@ -65,6 +65,7 @@ RUN touch Launch.sh \
     && tee -a Launch.sh <<< '-chardev socket,id=chrtpm,path=/home/arch/win-vm/mytpm/swtpm-sock \' \
     && tee -a Launch.sh <<< '-tpmdev emulator,id=tpm0,chardev=chrtpm \' \
     && tee -a Launch.sh <<< '-device tpm-tis,tpmdev=tpm0 \' \
+    && tee -a Launch.sh <<< '-rtc base=localtime \' \
     && tee -a Launch.sh <<< '${EXTRA:-}'
 
 RUN mkdir -p ~/.ssh \

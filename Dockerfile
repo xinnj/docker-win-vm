@@ -35,7 +35,11 @@ RUN touch Launch.sh \
     && tee -a Launch.sh <<< '[[ "${RAM}" = half ]] && export RAM="$(("$(head -n1 /proc/meminfo | tr -dc "[:digit:]") / 2000000"))"' \
     && tee -a Launch.sh <<< 'sudo chown -R $(id -u):$(id -g) /dev/snd 2>/dev/null || true' \
     && tee -a Launch.sh <<< 'cp -f /usr/share/edk2-ovmf/x64/OVMF_VARS.fd /home/arch/win-vm/' \
-    && tee -a Launch.sh <<< 'sudo /usr/lib/virtiofsd --socket-path=/var/run/qemu-vm-001.sock --shared-dir=/mnt/hostshare --cache always --socket-group=kvm &' \
+    && tee -a Launch.sh <<< 'export HOST_SHARE_PARAMS=""' \
+    && tee -a Launch.sh <<< 'if [[ ! -z "${HOST_SHARE}" ]]; then' \
+    && tee -a Launch.sh <<< '  sudo /usr/lib/virtiofsd --socket-path=/var/run/qemu-vm-001.sock --shared-dir=${HOST_SHARE} --cache always --socket-group=kvm &' \
+    && tee -a Launch.sh <<< '  export HOST_SHARE_PARAMS="-object memory-backend-memfd,id=mem,size=${RAM}G,share=on -numa node,memdev=mem -chardev socket,id=char0,path=/var/run/qemu-vm-001.sock -device vhost-user-fs-pci,chardev=char0,tag=myfs"' \
+    && tee -a Launch.sh <<< 'fi' \
     && tee -a Launch.sh <<< 'mkdir -p /home/arch/win-vm/mytpm' \
     && tee -a Launch.sh <<< 'swtpm socket --tpm2 --tpmstate dir=/home/arch/win-vm/mytpm --ctrl type=unixio,path=/home/arch/win-vm/mytpm/swtpm-sock &' \
     && tee -a Launch.sh <<< 'printf -v macaddr "52:54:%02x:%02x:%02x:%02x" $(( $RANDOM & 0xff)) $(( $RANDOM & 0xff )) $(( $RANDOM & 0xff)) $(( $RANDOM & 0xff ))' \
@@ -58,13 +62,10 @@ RUN touch Launch.sh \
     && tee -a Launch.sh <<< '-boot menu=on \' \
     && tee -a Launch.sh <<< '-vga std \' \
     && tee -a Launch.sh <<< '-monitor stdio \' \
-    && tee -a Launch.sh <<< '-object memory-backend-memfd,id=mem,size=${RAM}G,share=on \' \
-    && tee -a Launch.sh <<< '-numa node,memdev=mem \' \
-    && tee -a Launch.sh <<< '-chardev socket,id=char0,path=/var/run/qemu-vm-001.sock \' \
-    && tee -a Launch.sh <<< '-device vhost-user-fs-pci,chardev=char0,tag=myfs \' \
     && tee -a Launch.sh <<< '-chardev socket,id=chrtpm,path=/home/arch/win-vm/mytpm/swtpm-sock \' \
     && tee -a Launch.sh <<< '-tpmdev emulator,id=tpm0,chardev=chrtpm \' \
     && tee -a Launch.sh <<< '-device tpm-tis,tpmdev=tpm0 \' \
+    && tee -a Launch.sh <<< '${HOST_SHARE_PARAMS} \' \
     && tee -a Launch.sh <<< '-rtc base=localtime \' \
     && tee -a Launch.sh <<< '${EXTRA:-}'
 
@@ -128,6 +129,7 @@ ENV SCREEN_SHARE_PORT=5900
 ENV ADDITIONAL_PORTS=
 ENV NETWORKING=virtio-net-pci
 ENV SSH_KEY=/home/arch/.ssh/id_docker_win
+ENV HOST_SHARE=
 ENV WIN_COMMANDS=
 
 CMD if [[ "${HEADLESS}" = true ]]; then ./Auto.sh; else ./Launch.sh; fi

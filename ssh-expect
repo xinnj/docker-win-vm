@@ -29,6 +29,9 @@ expect {
                 exit 12
         }
     }
+    -nocase "powershell" {
+        exit 0
+    }
     default {
         send_error "ERROR : timeout or eof.\n"
         close $spawn_id
